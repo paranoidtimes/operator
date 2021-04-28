@@ -82,6 +82,7 @@ func (r *ConfigMapWatcherReconciler) Reconcile(ctx context.Context, req ctrl.Req
     // TODO error checking for if the configmap actually exists
 	configmap, err := coreV1Client.ConfigMaps("default").Get(context.TODO(), watcher.Spec.ConfigMap, metav1.GetOptions{})
 
+    // make a hash of the config map, use this to update deployment
 	var sha string
 	hash := sha1.New()
 	hash.Write([]byte(configmap.Data["config.cfg"]))
@@ -97,10 +98,11 @@ func (r *ConfigMapWatcherReconciler) Reconcile(ctx context.Context, req ctrl.Req
     // TODO error checking for if the deployment actually exists
 	result, getErr := deploymentsClient.Get(context.TODO(), watcher.Spec.Deployment, metav1.GetOptions{})
 	if getErr != nil {
-		panic(fmt.Errorf("Failed to get latest version of Deployment: %v", getErr))
+		panic(fmt.Errorf("Failed to get Deployment: %v", getErr))
 	}
 
 	// TODO Currently this will overwrite the first variable. This needs to be updated to examine the current variables, and update "config_hash" if it finds it, or add it to the end if it does not.
+    // update an env var in the deployment. This method allows for the deployment to track what state it is in, solving the issue of "did the config map change", rather than identifying that, just update the deployment, if it is the same value nothing happens, if it is updated, the deployment will reroll.
 	result.Spec.Template.Spec.Containers[0].Env[0].Value = sha
 	_, updateErr := deploymentsClient.Update(context.TODO(), result, metav1.UpdateOptions{})
 	if updateErr != nil {
