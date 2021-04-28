@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: app
+        image: nginx:latest
+        env:
+        - name: config_hash
+          value: "abc"
+        volumeMounts:
+        - name: config-vol
+          mountPath: /config
+      volumes:
+      - name: config-vol
+        configMap:
+          name: nginx-config

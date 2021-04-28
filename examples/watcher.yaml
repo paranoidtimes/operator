@@ -1,0 +1,9 @@
+apiVersion: batch.github.com/v1
+kind: ConfigMapWatcher
+metadata:
+  namespace: default
+  name: cmwatcher
+spec:
+  deployment: nginx
+  configmap: nginx-config
+  frequency: 8
